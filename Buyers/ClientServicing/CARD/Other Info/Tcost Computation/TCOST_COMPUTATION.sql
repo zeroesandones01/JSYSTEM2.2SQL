@@ -3,7 +3,6 @@ SELECT get_client_name('0629288911'), * FROM view_card_tcost_computation_v2_debu
 SELECT * FROM view_card_tcost_computation_v2_debug('9676179990', '003', '7061', 5, true); --MONTALBAN LOT
 SELECT * FROM view_card_tcost_computation_v2_debug('5705118161', '003', '6682', 2, true); --MONTALBAN LOT
 
-
 SELECT * 
 FROM mf_transfer_cost_dl
 WHERE status_id = 'A' 
