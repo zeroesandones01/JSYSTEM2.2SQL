@@ -515,7 +515,7 @@ from ( --select distinct on (co_id, pv_no, acct_id) co_id, pv_no, acct_id, div_i
 	co_id, pv_no, acct_id, sum(tran_amt) as tran_amt, div_id, dept_id, project_id, sub_projectid
 	from rf_pv_detail where status_id != 'I' and bal_side = 'D' 
 	and acct_id != '01-99-03-000'
-	and acct_id = '01-02-04-000' --ADDED BY LESTER TO FILTER ONLY ADVANCES TO OFFICERS AND EMPLOYEES ACCOUNTS
+	--and acct_id = '01-02-04-000' --COMMENTED BY LESTER 2024-11-11 TO DISPLAY OTHER ACCOUNTS FOR AR (SAMPLE PV 13883-VDC)
 	and acct_id like '01-02%'
 	and co_id = p_co_id
 	and (case when p_proj_id = '' then true else project_id = '' end)
@@ -1493,4 +1493,4 @@ GRANT EXECUTE ON FUNCTION public.view_sched_cashflow_details_with_proj_phase(cha
 
 GRANT EXECUTE ON FUNCTION public.view_sched_cashflow_details_with_proj_phase(character varying, character varying, character varying, timestamp without time zone, timestamp without time zone) TO postgres;
 
-COMMENT ON FUNCTION IS 
+COMMENT ON FUNCTION public.view_sched_cashflow_details_with_proj_phase(character varying, character varying, character varying, timestamp without time zone, timestamp without time zone) IS 'Function used to preview Cashflow Monitoring Report Detailed'
