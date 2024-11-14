@@ -7,14 +7,18 @@ CREATE OR REPLACE FUNCTION public.view_input_vat_debug(
 	p_project character varying,
 	p_date_from character varying,
 	p_date_to character varying)
-    RETURNS TABLE(c_tin character varying, c_payee character varying, c_availer character varying, c_refdoc character varying, c_refdate timestamp without time zone, c_payeeadd character varying, c_availeradd character varying, c_tranamt numeric, c_netamt numeric, c_vat numeric, c_goods_services character varying, c_account_name character varying, c_wtax_amt numeric) 
+    RETURNS TABLE(c_tin character varying, c_payee character varying, c_availer character varying, c_refdoc character varying, c_refdate timestamp without time zone, c_payeeadd character varying, c_availeradd character varying, c_tranamt numeric, c_netamt numeric, c_vat numeric, c_goods_services character varying, c_account_name character varying, c_wtax_amt numeric, c_input_vat_sub_group character varying) 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE PARALLEL UNSAFE
     ROWS 1000
 
 AS $BODY$
-DECLARE v_vat RECORD;
+DECLARE 
+
+v_vat RECORD;
+v_Input_VAT_Acct_ID VARCHAR;
+
 BEGIN
 	/*EDITED BY JED 2021-03-17 : CHANGE THE FUNCTION IN GETTING THE ADDRESS OF AVAILER AND PAYEE*/
 	
@@ -46,7 +50,7 @@ BEGIN
 -- 		(CASE WHEN ROUND((A.VAT_Amt::DECIMAL / 0.12::DECIMAL), 2) <= 0 THEN A.Tran_Amt ELSE ROUND((A.VAT_Amt::DECIMAL / 0.12::DECIMAL), 2) END) AS "Net Amount", 
 		A.Tran_Amt AS "Trans Amt", 
 		A.exp_amt AS "Net Amount",
-		A.VAT_Amt AS VAT, A."Good/Services", A.co_id, A.acct_name as "Account Name", A."wTax Amount", A.entity_id1, A.entity_id2
+		A.VAT_Amt AS VAT, A."Good/Services", A.co_id, A.acct_name as "Account Name", A."wTax Amount", A.entity_id1, A.entity_id2, A.tbl, A.acct_id
 		FROM
 		(
 			SELECT F.tin_no as "TIN", 
@@ -80,7 +84,7 @@ BEGIN
 			B.rplf_type_id, 
 			a.entity_id as entity_id1, 
 			c.entity_id2 as entity_id2, 
-			A.exp_amt
+			A.exp_amt, 'pv' as tbl,null as acct_id -- j.acct_id
 			FROM (SELECT * FROM rf_request_detail X WHERE X.status_id != 'I' and (x.co_id = p_co_id OR p_co_id = '')) A
 			LEFT JOIN (SELECT * from rf_request_header X WHERE X.status_id != 'I') B ON A.rplf_no = B.rplf_no AND A.co_id = B.co_id
 			LEFT JOIN (SELECT * from rf_pv_header X WHERE X.status_id = 'P') C ON A.rplf_no = C.rplf_no AND A.co_id = C.co_id
@@ -91,6 +95,7 @@ BEGIN
 			left join mf_boi_chart_of_accounts g on g.acct_id = a.acct_id
 			left join mf_current_address h on h.entity_id = a.entity_id
 			left join mf_current_address i on i.entity_id = a.entity_id
+			--LEFT JOIN rf_pv_detail j on j.pv_no = A.rplf_no and j.co_id = p_co_id and j.acct_id IN ('01-99-07-000', '01-99-03-000', '01-99-06-000') AND j.status_id = 'A' AND j.tran_amt = a.vat_amt
 			WHERE
 			A.entity_type_id IN ('02', '12', '05', '06', '19', '20', '25', '09', '10', '11', '07', '08', '15', 
 			'16', '17', '18', '23', '24', '34', '35', '32', '33', '03', '04', '14', '38', '39', '40', '41', '42', '43', '36')
@@ -266,7 +271,7 @@ BEGIN
 		--((CASE WHEN ROUND((A.VAT_Amt::DECIMAL / 0.12::DECIMAL), 2) <= 0 THEN A.Tran_Amt ELSE ROUND((A.VAT_Amt::DECIMAL / 0.12::DECIMAL), 2) END) + A.VAT_Amt::DECIMAL) AS "Trans Amt",
 		A.Tran_Amt as "Trans Amt", --replaced by lester 
 		(CASE WHEN ROUND((A.VAT_Amt::DECIMAL / 0.12::DECIMAL), 2) <= 0 THEN A.Tran_Amt ELSE ROUND((A.VAT_Amt::DECIMAL / 0.12::DECIMAL), 2) END) AS "Net Amount", 
-		A.VAT_Amt AS VAT, A."Good/Services", A.co_id, A.acct_name as "Account Name", A."wTax Amount", A.entity_id1, A.entity_id2
+		A.VAT_Amt AS VAT, A."Good/Services", A.co_id, A.acct_name as "Account Name", A."wTax Amount", A.entity_id1, A.entity_id2, A.tbl, A.acct_id
 		FROM
 		(
 			select replace(REPLACE(coalesce(d.tin_no), '-', ''), ' ', '') as "TIN", c.entity_name as "Payee", 
@@ -297,7 +302,7 @@ BEGIN
 			coalesce(a.wtax_amt, 0) as "wTax Amount", 
 			f.rplf_type_id, 
 			a.entity_id as entity_id1,
-			f.entity_id2
+			f.entity_id2, 'jv' as tbl, null as acct_id -- j.acct_id
 			from (select * from rf_subsidiary_ledger x where x.status_id = 'A' AND x.co_id = p_co_id OR p_co_id = '') a
 			inner join (select * from rf_jv_header x where x.status_id = 'P' AND x.co_id = p_co_id OR p_co_id = '') b on a.jv_no = b.jv_no and a.co_id = b.co_id
 			inner join rf_entity c on a.entity_id = c.entity_id
@@ -307,12 +312,15 @@ BEGIN
 			left join rf_entity g on g.entity_id = f.entity_id2
 			left join mf_current_address h on h.entity_id = c.entity_id
 			left join mf_current_address i on i.entity_id = f.entity_id2
+			--left join rf_jv_detail j on j.jv_no = a.jv_no and j.co_id = p_co_id and j.acct_id IN ('01-99-07-000', '01-99-03-000', '01-99-06-000') AND j.status_id = 'A' AND j.tran_amt = a.vat_amt
 		) A
 		WHERE (A.co_id = p_co_id OR p_co_id = '') 
 		AND (CASE WHEN COALESCE(A.JV, '') = '' THEN A.PV_Date ELSE A.JV_Date END)::DATE BETWEEN p_date_from::date and p_date_to::date
 		--AND A.VAT_Amt != 0
 	)
 	LOOP
+	
+		
 
 		c_tin				:=	v_vat."TIN";
 		c_payee				:=	v_vat."Payee";
@@ -327,6 +335,42 @@ BEGIN
 		c_goods_services	:=	v_vat."Good/Services";
 		c_account_name		:=	v_vat."Account Name";
 		c_wtax_amt			:=	v_vat."wTax Amount";
+		
+		
+		IF v_vat.tbl = 'pv' THEN
+		
+			RAISE INFO 'PVVVVVVV';
+			RAISE INFO 'Rec doc no: %', v_vat."Ref Doc. No.";
+			RAISE INFO 'Vat: %', v_vat."vat";
+			
+			c_input_vat_sub_group := (SELECT acct_name 
+									  from mf_boi_chart_of_accounts 
+									  where acct_id = (select acct_id 
+													   from rf_pv_detail 
+													   where pv_no = v_vat."Ref Doc. No." 
+													   and co_id = p_co_id 
+													   and acct_id iN ('01-99-07-000', '01-99-03-000', '01-99-06-000')
+													   AND tran_amt = v_vat."vat"
+													   and status_id = 'A')
+									  AND status_id = 'A');
+		else
+		
+			RAISE INFO 'JVVVVVVV';
+			RAISE INFO 'Rec doc no: %', c_refDoc;
+			RAISE INFO 'Vat: %', c_vat;
+			c_input_vat_sub_group := (SELECT acct_name 
+									  from mf_boi_chart_of_accounts 
+									  where acct_id = (select acct_id 
+													   from rf_jv_detail 
+													   where jv_no = c_refDoc 
+													   and co_id = p_co_id 
+													   and acct_id iN ('01-99-07-000', '01-99-03-000', '01-99-06-000')
+													   AND tran_amt = c_vat
+													   and status_id = 'A')
+									  AND status_id = 'A');
+		END IF;
+			
+		
 
 		RETURN NEXT;
 
