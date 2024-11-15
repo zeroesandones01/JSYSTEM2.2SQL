@@ -1,8 +1,8 @@
--- FUNCTION: public.view_input_vat_debug(character varying, character varying, character varying, character varying)
+-- FUNCTION: public.view_input_vat(character varying, character varying, character varying, character varying)
 
--- DROP FUNCTION IF EXISTS public.view_input_vat_debug(character varying, character varying, character varying, character varying);
+-- DROP FUNCTION IF EXISTS public.view_input_vat(character varying, character varying, character varying, character varying);
 
-CREATE OR REPLACE FUNCTION public.view_input_vat_debug(
+CREATE OR REPLACE FUNCTION public.view_input_vat(
 	p_co_id character varying,
 	p_project character varying,
 	p_date_from character varying,
@@ -317,7 +317,7 @@ BEGIN
 		WHERE (A.co_id = p_co_id OR p_co_id = '') 
 		AND (CASE WHEN COALESCE(A.JV, '') = '' THEN A.PV_Date ELSE A.JV_Date END)::DATE BETWEEN p_date_from::date and p_date_to::date
 		--AND A.VAT_Amt != 0
-	)
+	                                                                                                                                                                                                                       )
 	LOOP
 	
 		
@@ -347,11 +347,11 @@ BEGIN
 									  from mf_boi_chart_of_accounts 
 									  where acct_id = (select acct_id 
 													   from rf_pv_detail 
-													   where pv_no = v_vat."Ref Doc. No." 
+													   where pv_no = TRIM(REPLACE(c_refDoc, 'PV', '')) 
 													   and co_id = p_co_id 
 													   and acct_id iN ('01-99-07-000', '01-99-03-000', '01-99-06-000')
-													   AND tran_amt = v_vat."vat"
-													   and status_id = 'A')
+													   --AND tran_amt = v_vat."vat"
+													   and status_id = 'A' GROUP BY acct_id)
 									  AND status_id = 'A');
 		else
 		
@@ -362,11 +362,11 @@ BEGIN
 									  from mf_boi_chart_of_accounts 
 									  where acct_id = (select acct_id 
 													   from rf_jv_detail 
-													   where jv_no = c_refDoc 
+													   where jv_no = TRIM(REPLACE(c_refDoc, 'JV', '')) 
 													   and co_id = p_co_id 
 													   and acct_id iN ('01-99-07-000', '01-99-03-000', '01-99-06-000')
-													   AND tran_amt = c_vat
-													   and status_id = 'A')
+													   --AND tran_amt = c_vat
+													   and status_id = 'A' GROUP BY acct_id)
 									  AND status_id = 'A');
 		END IF;
 			
@@ -379,13 +379,13 @@ BEGIN
 END;
 $BODY$;
 
-ALTER FUNCTION public.view_input_vat_debug(character varying, character varying, character varying, character varying)
+ALTER FUNCTION public.view_input_vat(character varying, character varying, character varying, character varying)
     OWNER TO postgres;
 
-GRANT EXECUTE ON FUNCTION public.view_input_vat_debug(character varying, character varying, character varying, character varying) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION public.view_input_vat(character varying, character varying, character varying, character varying) TO PUBLIC;
 
-GRANT EXECUTE ON FUNCTION public.view_input_vat_debug(character varying, character varying, character varying, character varying) TO employee;
+GRANT EXECUTE ON FUNCTION public.view_input_vat(character varying, character varying, character varying, character varying) TO employee;
 
-GRANT EXECUTE ON FUNCTION public.view_input_vat_debug(character varying, character varying, character varying, character varying) TO postgres;
+GRANT EXECUTE ON FUNCTION public.view_input_vat(character varying, character varying, character varying, character varying) TO postgres;
 
-COMMENT ON FUNCTION public.view_input_vat_debug(character varying, character varying, character varying, character varying) IS 'Function used to preview Input VAT Sched V2 in CRES/Expense/VAT Reports Module'
+COMMENT ON FUNCTION public.view_input_vat(character varying, character varying, character varying, character varying) IS 'Function used to preview Input VAT Sched V2 in CRES/Expense/VAT Reports Module'
