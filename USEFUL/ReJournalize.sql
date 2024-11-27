@@ -9,7 +9,8 @@ select pay_rec_id, * from rf_payments where entity_id = '2041770384' order by pa
 --update rf_client_schedule set amount = 16783.05, principal = 11516.29 where entity_id = '2041770384' and scheddate::DATE = '2024-12-14';
 
 select sp_apply_ledger_again(788979, true, 'V2');
-
+789319
+789318
 select get_client_name(a.entity_id), a.trans_date, a.or_doc_id, a.pr_doc_id, a.or_doc_id is not null,
 (
 	case
@@ -19,10 +20,13 @@ select get_client_name(a.entity_id), a.trans_date, a.or_doc_id, a.pr_doc_id, a.o
 	end
 ) AS "script"
 from rf_payments a
-where a.pay_rec_id IN (789208)
+where a.pay_rec_id IN (789319, 789318)
 and not exists(select * from rf_crb_detail x where (x.rb_id = a.or_no or x.rb_id = a.ar_no) and x.pay_rec_id::int = a.pay_rec_id::int /*and x.status_id = 'A'*/)
 and a.branch_id in ('01', '06', '10')
 and date_part('year', a.trans_date) >= '2019'
 and a.status_id != 'I'
 and get_client_name(a.entity_id) NOT IN ('CENQHOMES DEVELOPMENT CORPORATION', 'ACERHOMES DEVELOPMENT CORPORATION', 'VERDANTPOINT  DEVELOPMENT CORPORATION', 'VERDANTPOINT  DEVELOPMENT CORPORATION');
+
+select sp_journalize_or_v2 ('7634094788', '019', '662', '3', '789318', '901169');
+select sp_journalize_or_v2 ('8036631251', '019', '14', '3', '789319', '901169');
 
