@@ -196,7 +196,7 @@ BEGIN
 			select y.rplf_no, z.entity_id, z.liq_no, z.rplf_line_no, z.wtax_amt, z.wtax_id, z.entity_type_id, x.*
 			from rf_jv_header x 
 			left join (select * from rf_liq_header where status_id != 'I') y on x.jv_no = y.jv_no and x.co_id = y.co_id
-			right join (select * from rf_liq_detail where status_id != 'I') z on y.liq_no = z.liq_no and x.co_id = y.co_id
+			right join (select * from rf_liq_detail where status_id != 'I') z on y.liq_no = z.liq_no and x.co_id = z.co_id
 			--where x.status_id != 'I'	
 			where x.status_id = 'P'
 			
@@ -243,8 +243,10 @@ BEGIN
 				where x.status_id = 'A'
 				group by y.jv_no, x.entity_type_id
 		) j on j.jv_no = g.jv_no and j.entity_type_id = g.entity_type_id
-		where coalesce(g.jv_no, '') = ''
-		and bb.pv_date >= '2014-01-01 00:00:00' 
+		where 
+		--coalesce(g.jv_no, '') = ''
+		--and 
+		bb.pv_date >= '2014-01-01 00:00:00' 
 		and a.co_id = p_co_id 
 
 		-- Modified by Mann2x; Date Modified: February 13, 2017; The date filter for JV numbers shoud be the date from the liquidation;

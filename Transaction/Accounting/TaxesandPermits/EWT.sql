@@ -1,49 +1,49 @@
-select 
-		(
-			case 
-				when coalesce(NULLIF(TRIM(g.jv_no), ''), '') != '' 
-					then g.entity_id 
-				else (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id2) end) 
-			end
-		) as entity_id2,
-		cc.tin_no,
-		upper(trim(c.entity_name)) as client,
-		a.rplf_no,
-		bb.cv_no,
-		g.jv_no as jv_no,
-		to_char(bb.pv_date,'MM-dd-yyyy') as pv_date,
-		(case when coalesce(g.jv_no, '') <> '' then g.wtax_amt else a.wtax_amt end) as wtax_amt,
+-- select 
+-- 		(
+-- 			case 
+-- 				when coalesce(NULLIF(TRIM(g.jv_no), ''), '') != '' 
+-- 					then g.entity_id 
+-- 				else (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id2) end) 
+-- 			end
+-- 		) as entity_id2,
+-- 		cc.tin_no,
+-- 		upper(trim(c.entity_name)) as client,
+-- 		a.rplf_no,
+-- 		bb.cv_no,
+-- 		g.jv_no as jv_no,
+-- 		to_char(bb.pv_date,'MM-dd-yyyy') as pv_date,
+-- 		(case when coalesce(g.jv_no, '') <> '' then g.wtax_amt else a.wtax_amt end) as wtax_amt,
 
-		/*	RIDER CHANGE	*/
-		(
-			case
-				when coalesce(g.jv_no, '') <> ''
-					then j.net_paid
-				else 
-				(
-					case
-						when coalesce(h.wtax_rate, 0) = 0
-							then null 
-						else
-							--case when a.vat_amt != 0 then 
-								a.exp_amt --DEFAULT BY LESTER TO EXP AMOUNT BECAUSE OF WRONG COMPUTATION FOR DECIMAL PLACES
-							--else --REPLACE THIS WHEN WRONG COMPUTATION FOR NET AMOUNT
-						       --(a.wtax_amt /  (ROUND(h.wtax_rate::DECIMAL, 2) / 100))::numeric(19, 2) --replace with amount because of wrong computation of amount
-							--end
-					end
-				)
+-- 		/*	RIDER CHANGE	*/
+-- 		(
+-- 			case
+-- 				when coalesce(g.jv_no, '') <> ''
+-- 					then j.net_paid
+-- 				else 
+-- 				(
+-- 					case
+-- 						when coalesce(h.wtax_rate, 0) = 0
+-- 							then null 
+-- 						else
+-- 							--case when a.vat_amt != 0 then 
+-- 								a.exp_amt --DEFAULT BY LESTER TO EXP AMOUNT BECAUSE OF WRONG COMPUTATION FOR DECIMAL PLACES
+-- 							--else --REPLACE THIS WHEN WRONG COMPUTATION FOR NET AMOUNT
+-- 						       --(a.wtax_amt /  (ROUND(h.wtax_rate::DECIMAL, 2) / 100))::numeric(19, 2) --replace with amount because of wrong computation of amount
+-- 							--end
+-- 					end
+-- 				)
 
-			end
-		) as net_paid, 
+-- 			end
+-- 		) as net_paid, 
 		
-		to_char(e.date_paid,'MM-dd-yyyy') as date_paid, 
-		(case when a.sub_projectid is not null or a.sub_projectid = '' then true else (case when f.lts_date is null then false else true end) end) as with_lts,
-		--concat_ws('/', LPAD(DATE_PART('Month', b.rplf_date)::CHAR(2), 2, '0'), 	RIGHT(DATE_PART('YEAR', b.rplf_date)::CHAR(4), 2)) as RetPer, 
-		concat_ws('/', LPAD(DATE_PART('Month', bb.pv_date)::CHAR(2), 2, '0'), 	RIGHT(DATE_PART('YEAR', bb.pv_date)::CHAR(4), 2)) as RetPer, --DCRF 3138 
-		h.wtax_bir_code as bircode, h.income_payment_desc, ROUND(h.wtax_rate::DECIMAL, 2) as tax_rate, 
-		i.acct_name, 
-		coalesce(concat('Phase',(select phase from mf_sub_project where sub_proj_id = a.sub_projectid and proj_id = a.project_id and status_id != 'I'),'')) as phase,
-		(select proj_name from mf_project where proj_id = a.project_id) as proj_name
+-- 		to_char(e.date_paid,'MM-dd-yyyy') as date_paid, 
+-- 		(case when a.sub_projectid is not null or a.sub_projectid = '' then true else (case when f.lts_date is null then false else true end) end) as with_lts,
+-- 		--concat_ws('/', LPAD(DATE_PART('Month', b.rplf_date)::CHAR(2), 2, '0'), 	RIGHT(DATE_PART('YEAR', b.rplf_date)::CHAR(4), 2)) as RetPer, 
+-- 		concat_ws('/', LPAD(DATE_PART('Month', bb.pv_date)::CHAR(2), 2, '0'), 	RIGHT(DATE_PART('YEAR', bb.pv_date)::CHAR(4), 2)) as RetPer, --DCRF 3138 
+-- 		h.wtax_bir_code as bircode, h.income_payment_desc, ROUND(h.wtax_rate::DECIMAL, 2) as tax_rate, 
+-- 		i.acct_name, 
+-- 		coalesce(concat('Phase',(select phase from mf_sub_project where sub_proj_id = a.sub_projectid and proj_id = a.project_id and status_id != 'I'),'')) as phase,
+-- 		(select proj_name from mf_project where proj_id = a.project_id) as proj_name
 		
 		SELECT *
 		from 
@@ -53,7 +53,8 @@ select
 			where x.status_id != 'I'
 			and x.wtax_amt != 0
 			and x.co_id = '04'
-			and x.rplf_no = '000002271'
+			and x.rplf_no IN ('000002273')
+			--and x.rplf_no in ('000002271', '000002273')
 		) a
 		left join mf_project mfp on a.co_id = mfp.co_id and a.project_id = mfp.proj_id
 		--left join (select * from rf_request_header where status_id != 'I') b on a.rplf_no =b.rplf_no and a.co_id = b.co_id
@@ -122,7 +123,7 @@ select
 				where x.status_id = 'A'
 				group by y.jv_no, x.entity_type_id
 		) j on j.jv_no = g.jv_no and j.entity_type_id = g.entity_type_id
-		--where coalesce(g.jv_no, '') = ''
+		where coalesce(g.jv_no, '') = ''
 		and bb.pv_date >= '2014-01-01 00:00:00' 
 		and a.co_id = '04' 
 
