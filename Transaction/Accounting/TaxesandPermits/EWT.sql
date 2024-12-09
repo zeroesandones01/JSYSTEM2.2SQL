@@ -1,19 +1,20 @@
 select 
--- 		(
--- 			case 
--- 				when coalesce(NULLIF(TRIM(g.jv_no), ''), '') != '' 
--- 					then g.entity_id 
--- 				else (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id2) end) 
--- 			end
--- 		) as entity_id2,
--- 		cc.tin_no,
--- 		upper(trim(c.entity_name)) as client,
--- 		a.rplf_no,
--- 		bb.cv_no,
--- 		g.jv_no as jv_no,
--- 		to_char(bb.pv_date,'MM-dd-yyyy') as pv_date,
+		(
+			case 
+				when coalesce(NULLIF(TRIM(g.jv_no), ''), '') != '' 
+					then g.entity_id 
+				else (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id2) end) 
+			end
+		) as entity_id2,
+		
+		a.entity_id, trim(bb.entity_id2), cc.entity_id,
+		cc.tin_no,
+		upper(trim(c.entity_name)) as client,
+		a.rplf_no,
+		bb.cv_no,
+		g.jv_no as jv_no,
+		to_char(bb.pv_date,'MM-dd-yyyy') as pv_date,
 -- 		(case when coalesce(g.jv_no, '') <> '' then g.wtax_amt else a.wtax_amt end) as wtax_amt,
-		a.wtax_amt, g.wtax_amt,
 		/*	RIDER CHANGE	*/
 		(
 			case
@@ -53,7 +54,7 @@ select
 			where x.status_id != 'I'
 			and x.wtax_amt != 0
 			and x.co_id = '04'
-			and x.rplf_no IN ('000002273', '000002271')
+			and x.rplf_no IN ('000002393', '000002316')
 			--and x.rplf_no in ('000002271', '000002273')
 		) a
 		left join mf_project mfp on a.co_id = mfp.co_id and a.project_id = mfp.proj_id
@@ -105,15 +106,16 @@ select
 -- 		and coalesce(c.server_id, '') = coalesce(mfp.server_id, '')
 		
 		--left join rf_entity_id_no cc on (case when coalesce(g.jv_no, '') != '' then g.entity_id else (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id2) end) end) = cc.entity_id 
-		left join rf_entity_id_no cc on (case when coalesce(g.jv_no, '') != '' then b.entity_id1 else (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id2) end) end) = cc.entity_id 
+		left join rf_entity_id_no cc on (case when trim(b.rplf_type_id) = '04' then (a.entity_id) else trim(bb.entity_id1) end) = cc.entity_id 
 		LEFT JOIN rf_withholding_tax h ON 
-		(
-			CASE
-				WHEN COALESCE(g.jv_no, '') = ''	
-					THEN coalesce(a.wtax_id,ab.wtax_id)
-				ELSE  g.wtax_id
-			END
-		) = h.wtax_id 
+-- 		(
+-- 			CASE
+-- 				WHEN COALESCE(g.jv_no, '') = ''	
+-- 					THEN coalesce(a.wtax_id,ab.wtax_id)
+-- 				ELSE  g.wtax_id
+-- 			END
+-- 		) 
+		a.wtax_id = h.wtax_id 
 		left join mf_boi_chart_of_accounts i on i.acct_id = a.acct_id
 		left join
 		(
@@ -171,8 +173,8 @@ select
 		(
 			case
 				when coalesce(g.jv_no, '') <> ''
-					then (case when '10' = '' then true else substr(trim(to_char(g.jv_date, 'MM-dd-yyyy')), 0, 3) = '10' end)
-				else (case when '10' = '' then true else substr(trim(to_char(bb.pv_date, 'MM-dd-yyyy')), 0, 3) = '10' end)
+					then (case when '11' = '' then true else substr(trim(to_char(g.jv_date, 'MM-dd-yyyy')), 0, 3) = '11' end)
+				else (case when '11' = '' then true else substr(trim(to_char(bb.pv_date, 'MM-dd-yyyy')), 0, 3) = '11' end)
 			end
 		)
 		and (case when '' = '' then true else a.rplf_no = '' end)

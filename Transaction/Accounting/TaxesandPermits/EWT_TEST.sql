@@ -14,3 +14,10 @@ select wtax_id, wtax_amt, wtax_rate, * from rf_liq_detail where liq_no IN ('0000
 
 select * from rf_request_detail where rplf_no in ('000002271', '000002273') and co_id = '04' and status_id = 'A';
 select * from rf_pv_detail where pv_no in ('000002271', '000002273') and co_id = '04' and status_id = 'A';
+
+select * from rf_pv_header where pv_no = '000002393' and co_id = '04';
+select * from rf_entity where entity_id = '4136932939';
+select * from rf_entity where 
+
+select * 
+from view_EWT_forRemittance_all_v2_debug('04', '','','','', '2024','','10','11','12','11','','', '900876') where c_rplf_no ~*'2316'
