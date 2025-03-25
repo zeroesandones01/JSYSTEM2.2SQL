@@ -48,7 +48,12 @@ BEGIN
 			pending_or boolean, 
 			client_ledger_part character varying, 
 			ref_rec_id integer, 
-			pay_for_lot character varying)) LOOP
+			pay_for_lot character varying, 
+			due_type character varying,
+			ud_id integer,
+			co_id character varying,
+			reference_no character varying,
+			remarks character varying)) LOOP
 
 		v_Entity_ID := (select entity_id from rf_pay_header where client_seqno = v_payments.client_seqno);
 		

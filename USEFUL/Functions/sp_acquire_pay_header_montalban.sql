@@ -65,7 +65,11 @@ BEGIN
 			unit_id character varying, 
 			part_sequence smallint, 
 			pay_header_id bigint, 
-			request_no character varying)) LOOP
+			request_no character varying,
+			income_cluster character varying,
+			disc_amt numeric, 
+			credit_itsreal boolean, 
+			batch_no character varying)) LOOP
 
 		
 		

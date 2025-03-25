@@ -20,13 +20,17 @@ select get_client_name(a.entity_id), a.trans_date, a.or_doc_id, a.pr_doc_id, a.o
 	end
 ) AS "script"
 from rf_payments a
-where a.pay_rec_id IN (789319, 789318)
+where a.pay_rec_id IN (790600)
 and not exists(select * from rf_crb_detail x where (x.rb_id = a.or_no or x.rb_id = a.ar_no) and x.pay_rec_id::int = a.pay_rec_id::int /*and x.status_id = 'A'*/)
 and a.branch_id in ('01', '06', '10')
 and date_part('year', a.trans_date) >= '2019'
 and a.status_id != 'I'
 and get_client_name(a.entity_id) NOT IN ('CENQHOMES DEVELOPMENT CORPORATION', 'ACERHOMES DEVELOPMENT CORPORATION', 'VERDANTPOINT  DEVELOPMENT CORPORATION', 'VERDANTPOINT  DEVELOPMENT CORPORATION');
 
-select sp_journalize_or_v2 ('7634094788', '019', '662', '3', '789318', '901169');
-select sp_journalize_or_v2 ('8036631251', '019', '14', '3', '789319', '901169');
+select sp_journalize_or_v2 ('7146698007', '019', '13841', '8', '791960', '901169');
 
+SELECT * FROM rf_crb_header where pay_rec_id::INT = 792010;
+
+select sp_journalize_or_v2 ('6511006234', '', '', '0', '791932', '901169');
+
+select sp_journalize_or_v2 ('5828941329', '019', '6086', '1', '790600', '901169');

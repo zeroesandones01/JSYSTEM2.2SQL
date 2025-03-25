@@ -30,7 +30,7 @@ BEGIN
 	PERFORM dblink_connect('dbPayments', 'host='||p_host||' user='||p_user||' password='||p_password||' dbname='||p_database||'');
 
 	FOR v_payments IN (
-		SELECT * FROM dblink('dbPayments', concat('select * from rf_payments where date_created::DATE = ''',p_date,'''::date and status_id = ''A'' order by pay_rec_id')) AS a
+		SELECT * FROM dblink('dbPayments', concat('select * from rf_payments where date_created::DATE = ''',p_date,'''::date and status_id = ''A'' and branch_id = ''11'' order by pay_rec_id')) AS a
 		(entity_id character varying, 
 			proj_id character varying, 
 			pbl_id character varying, 
@@ -118,9 +118,17 @@ BEGIN
 				v_payments.receipt_id, v_payments.co_id, v_payments.unit_id, v_payments.total_ar_amt, v_payments.created_by, 
 				v_payments.date_created, v_payments.refund_date, v_payments.from_pay_rec_id
 			);
+
+			IF v_payments.or_doc_id = '01' THEN
+				PERFORM sp_journalize_or_v2 (v_Entity_ID, v_payments.proj_id, v_payments.pbl_id, v_payments.seq_no, v_pay_rec_id, v_payments.created_by);
+			END IF;
+
+			IF v_payments.or_doc_id = '03' THEN
 			
 			PERFORM sp_journalize_ar(v_Entity_ID, v_payments.proj_id, v_payments.pbl_id, v_payments.seq_no, '02', v_payments.or_no, v_payments.amount, v_payments.pay_part_id, v_pay_rec_id, v_payments.created_by);
 
+			END IF;
+			
            RAISE INFO 'Client Seq No: %', v_payments.client_seqno;   
 	   --END IF;
 	end if;
